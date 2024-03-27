@@ -8,6 +8,8 @@ CREATE TABLE users(
     UserPassword varchar(100) NOT NULL,
     UserRole varchar(100) NOT NULL,
     UserToken varchar(100),
+    Salt varchar(100) NOT NULL,
+    PastPassword VARCHAR(255) NOT NULL,
     ExpirationDate TIMESTAMP,
     CreationDate TIMESTAMP,
     FailedLoginAttemps int DEFAULT 0,

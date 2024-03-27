@@ -25,13 +25,32 @@ def index():
 
 
 @app.route('/users', methods=['GET'])
-def getUsers():
+def getAllUsers():
     return select_all_from_db()
 
 
 def login():
     return "login"
 
+
+def getUser():
+    return ""
+
+
+def registerUser():
+    return ""
+
+
+def updatePermissions():
+    return ""
+
+
+def getClients():
+    return ""
+
+
+def updatePassword():
+    return ""
 
 # # Register/Login
 class User:
