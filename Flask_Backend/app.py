@@ -14,7 +14,6 @@ CORS(app)
 app.config['SECRET_KEY'] = 'Th1s1ss3cr3t'
 
 connection = mysql.connector.connect(user='root', password='password', host='mysql', port="3306", database='lab5db')
-print("DB connected")
 
 @app.route('/api', methods=['GET'])
 def index():
@@ -51,20 +50,6 @@ def getClients():
 
 def updatePassword():
     return ""
-
-# # Register/Login
-class User:
-    def __init__(self, public_id, name, password, admin):
-        self.public_id = public_id
-        self.name = name
-        self.password = password
-        self.admin = admin
-
-    id = 0
-    public_id = 0
-    name = ""
-    password = ""
-    admin = False
 
 users = {}
 
