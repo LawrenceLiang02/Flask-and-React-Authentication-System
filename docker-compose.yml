@@ -1,0 +1,37 @@
+version: "3.9"
+services:
+  mysql:
+    build: ./Database
+    restart: always
+    environment:
+      MYSQL_ROOT_HOST: "%"
+      # MYSQL_DATABASE: lab5db
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - '3306:3306'
+  server:
+    build: ./Flask_Backend
+    ports:
+      - "80:5000"
+    # volumes:
+    #   - type: bind
+    #     source: ./Flask_Backend
+    #     target: /app
+    volumes:
+      - ./Flask_Backend/:/app/
+    environment:
+      FLASK_ENV: development
+    depends_on:
+      - mysql
+  # web:
+  #   build: ./React_Frontend
+  #   ports:
+  #     - "3000:3000"
+  #   # volumes:
+  #   #   - type: bind
+  #   #     source: ./React_Frontend
+  #   #     target: /user/src/app
+  #   volumes:
+  #     - ./React_Frontend/:/user/src/app/
+  #   depends_on:
+  #     - server
