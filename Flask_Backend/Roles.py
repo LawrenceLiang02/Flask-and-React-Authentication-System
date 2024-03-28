@@ -1,6 +1,7 @@
 from enum import Enum
 
 class Roles(Enum):
-    ADMIN = "admin"
-    RESIDENTIELS = "residentiels"
-    AFFAIRE = "affaire"
+    ADMIN = "ADMIN"
+    RESIDENTIELS = "PREP_RESIDENTIEL"
+    AFFAIRE = "PREP_AFFAIRE"
+    CLIENT = "CLIENT"

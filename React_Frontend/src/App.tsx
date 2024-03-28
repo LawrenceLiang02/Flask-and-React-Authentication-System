@@ -1,25 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import logo from './logo.svg';
 import './App.css';
-import Channel from './Components/channel'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Login from './Pages/login';
 
 function App() {
-  const [initialState, setState] = useState([])
-  const url = "http://127.0.0.1:80/api"
-
-  useEffect(()=> {
-    fetch(url).then(response => {
-      if (response.status == 200) {
-        return response.json()
-      }
-    }).then(data => setState(data))
-  }, [])
-
   return (
-    <div className="App">
-      <h1>Test hahaha test</h1>
-      <Channel data={initialState}></Channel>
-    </div>
+    <BrowserRouter>
+		<Routes>
+			<Route path="/login" element={<Login />} />
+		</Routes>
+	</BrowserRouter>
   );
 }
 
