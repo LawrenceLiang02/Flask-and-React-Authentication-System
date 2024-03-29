@@ -8,6 +8,7 @@ import jwt
 from functools import wraps
 
 from Roles import Roles
+from LogType import LogType
 from db_operations import dbOperations
 
 app = Flask(__name__)
@@ -17,41 +18,45 @@ app.config['SECRET_KEY'] = 'Th1s1ss3cr3t'
 
 db = dbOperations()
 
-def token_required(f):
-    @wraps(f)
-    def decorator(*args, **kwargs):
+def token_required(*required_roles):
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
 
-        token = None
+            token = None
 
-        if 'x-access-tokens' in request.headers:
-            token = request.headers['x-access-tokens']
+            if 'x-access-tokens' in request.headers:
+                token = request.headers['x-access-tokens']
 
-        if not token:
-            return jsonify({'message': 'a valid token is missing'})
+            if not token:
+                return jsonify({'message': 'a valid token is missing'})
 
-        try:
-            data = jwt.decode(token, app.config["SECRET_KEY"], algorithms="HS256")
-            user, =  db.getUserById(data.get('id'))
+            try:
+                data = jwt.decode(token, app.config["SECRET_KEY"], algorithms="HS256")
+                user, role =  db.getTokenValidationById(data.get('id'))
 
-            if user != data.get('username'):
-                return jsonify({'message': 'token is invalid'}), 401
-            
-            expiration_time = data.get('exp')
+                if role not in required_roles:
+                    return jsonify({'message': 'insufficient permissions'}), 403
+                
+                if user != data.get('username'):
+                    return jsonify({'message': 'token is invalid'}), 401
+                
+                expiration_time = data.get('exp')
 
-            if int(datetime.datetime.utcnow().timestamp()) > expiration_time:
-                return jsonify({'message': 'Token has expired'}), 401
+                if int(datetime.datetime.utcnow().timestamp()) > expiration_time:
+                    return jsonify({'message': 'Token has expired'}), 401
 
-        except Exception as ex:
-            return jsonify({'message': str(ex)}), 400
+            except Exception as ex:
+                return jsonify({'message': str(ex)}), 400
 
-        return f(user, *args, **kwargs)
+            return f(*args, **kwargs)
 
+        return wrapper
     return decorator
-
 
 @app.route('/users', methods=['GET'])
 def getAllUsers():
-    return jsonify(db.getUsers())
+    return jsonify(db.getUsers()),200
 
 
 @app.route('/signup', methods=['POST'])
@@ -59,6 +64,10 @@ def signup():
     try:
         username = request.json["username"]
         password = request.json["password"]
+
+        if db.userExists(username):
+            return jsonify({'error': 'username already taken'}), 400
+
         role = Roles.CLIENT
 
         salt = generate_salt()
@@ -69,7 +78,7 @@ def signup():
         db.createUser(username, hashed_password, role.value, salt, password_expiration)
         
         return jsonify({
-            "message": "Signup successful"
+            "message": "signup successful"
         }), 200
     except Exception as ex:
         return jsonify({'error': str(ex)}), 400
@@ -89,20 +98,34 @@ def login():
             hashed_password = hash_password(auth.password, salt)
 
             if hashed_password != user_password:
+                db.createLog(event_type=LogType.FAILURE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
                 return jsonify({'error': 'Wrong password'}), 401
             
             token = jwt.encode({'id': user_id, 'username': auth.username,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config["SECRET_KEY"], algorithm="HS256")
-
+            db.createLog(event_type=LogType.SUCCESS.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
         return jsonify({'token': token})
     
     except Exception as e:
+        db.createLog(event_type=LogType.FAILURE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
         return jsonify({'error': str(e)}), 400
 
 
 @app.route('/getUser', methods=['GET'])
-@token_required
-def getUser(user):
-    return str(user)
+@token_required(Roles.ADMIN.value)
+def getUser():
+    return str("test")
+
+
+@app.route('/validatetoken', methods=['POST'])
+@token_required(Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIELS.value, Roles.CLIENT_RESIDENTIELS.value, Roles.CLIENT_AFFAIRE.value,)
+def validateToken():
+    return jsonify({'message': 'token valid'}), 200
+
+
+@app.route('/getLogs', methods=['GET'])
+@token_required(Roles.ADMIN.value,)
+def getLogs():
+    return jsonify(db.getLogs()), 200
 
 
 def updatePermissions():
