@@ -63,10 +63,10 @@ function Signup(){
             </div>
             
             <div className='w-full flex flex-col justfiy-start'>
-              <a className="text-blue-400 hover:underline ease-in-out duration-200 transition-all" href="/login">Retourner à la page de connexion</a>
+              <a className="text-blue-500 hover:underline ease-in-out duration-200 transition-all" href="/login">Retourner à la page de connexion</a>
             </div>
 
-            <input className='bg-orange-500 text-white py-2 px-8 rounded-lg hover:bg-orange-600 hover:scale-[105%] hover:drop-shadow-lg ease-in-out duration-200 transition-all cursor-pointer' type="submit" value="Créer mon compte" />
+            <input className='bg-blue-600 text-white py-2 px-8 rounded-lg hover:bg-blue-700 hover:scale-[105%] hover:drop-shadow-lg ease-in-out duration-200 transition-all cursor-pointer' type="submit" value="Créer mon compte" />
           </form>
         </div>
       </div>

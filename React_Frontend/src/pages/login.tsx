@@ -5,6 +5,7 @@ import { useNavigate  } from 'react-router-dom';
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -26,13 +27,18 @@ function Login() {
       if (response.status === 200) {
         console.log('Login successful');
         const token = response.data.token;
+        const username = response.data.username;
+        const user_role = response.data.user_role;
         localStorage.setItem('token', token);
+        localStorage.setItem('user_role', user_role);
+        localStorage.setItem('username', username);
         navigate('/dashboard');
       } else {
         alert('Login failed');
-        console.log("Failed")
+        console.log("Login Failed")
       }
-    } catch (error) {
+    } catch (error:any) {
+      setErrorMessage('Error: ' + error.response.data.error);
       console.error('Error during login:', error);
     }
   };
@@ -43,6 +49,7 @@ function Login() {
         <div className='text-3xl font-semibold tracking-wider'>LOGIN - ÉQUIPE M</div>
 
         <form onSubmit={handleSubmit} className='space-y-4 flex flex-col items-center justify-between w-full'>
+          {errorMessage && <div className="text-red-600">{errorMessage}</div>}
           <div className='flex flex-row items-start justify-between space-x-2 w-full'>
             <p className='text-lg font-semibold'>Nom d'utilisateur: </p>
             <input
@@ -66,11 +73,11 @@ function Login() {
           </div>
 
           <div className='w-full flex flex-col justfiy-start'>
-            <a className="text-blue-400 hover:underline ease-in-out duration-200 transition-all" href="/signup">Créer un compte</a>
-            <a className="text-blue-400 hover:underline ease-in-out duration-200 transition-all" href="/forgotpassword">Mot de passe oublié</a>
+            <a className="text-blue-500 hover:underline ease-in-out duration-200 transition-all" href="/signup">Créer un compte</a>
+            {/* <a className="text-blue-500 hover:underline ease-in-out duration-200 transition-all" href="/forgotpassword">Mot de passe oublié</a> */}
           </div>
           
-          <input className='bg-orange-500 text-white py-2 px-8 rounded-lg hover:bg-orange-600 hover:scale-[105%] hover:drop-shadow-lg ease-in-out duration-200 transition-all cursor-pointer' type="submit" value="Se Connecter" />
+          <input className='bg-blue-600 text-white py-2 px-8 rounded-lg hover:bg-blue-700 hover:scale-[105%] hover:drop-shadow-lg ease-in-out duration-200 transition-all cursor-pointer' type="submit" value="Se Connecter" />
         </form>
       </div>
     </div>
