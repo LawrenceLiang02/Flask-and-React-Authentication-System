@@ -5,18 +5,45 @@ import { useNavigate  } from 'react-router-dom';
 function Signup(){
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [user_role, setUserRole] = useState('');
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState('');
   
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
 
+        const capitalLetterRegex = /[A-Z]/;
+        const numberRegex = /\d/;
+        const specialCharacterRegex = /[$%#@!&]/;
+        const validLength = password.length >= 8 && password.length <= 16;
+    
+        if (!capitalLetterRegex.test(password)) {
+          setErrorMessage('Password must contain at least one capital letter.');
+          return;
+        }
+    
+        if (!numberRegex.test(password)) {
+          setErrorMessage('Password must contain at least one number.');
+          return;
+        }
+    
+        if (!specialCharacterRegex.test(password)) {
+          setErrorMessage('Password must contain at least one special character ($%#@!&).');
+          return;
+        }
+    
+        if (!validLength) {
+          setErrorMessage('Password must be between 8 to 16 characters in length.');
+          return;
+        }
+        
         try {
             const response = await axios.post(
                 'http://localhost/signup',
                 {
                     username: username,
-                    password: password
+                    password: password,
+                    user_role: user_role
                 }
             );
 
@@ -60,6 +87,23 @@ function Signup(){
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+            </div>
+
+            <div className='flex flex-row items-center justify-between w-full h-full'>
+              <p className='text-lg font-semibold w-2/5'>Type de client:</p>
+              <div className='flex flex-row items-start justify-between w-3/5 h-full'>
+                <div className='text-lg flex flex-row items-center justify-around space-x-2'>
+                  <input type="radio" value="CLIENT_AFFAIRE" name="client" onChange={(e) => setUserRole("CLIENT_AFFAIRE") }/>
+                  <p>Affaire</p>
+                </div>
+                
+                <div className='text-lg flex flex-row items-center justify-around space-x-2'>
+                  <input type="radio" value="CLIENT_RESIDENTIEL" name="client" onChange={(e) => setUserRole("CLIENT_RESIDENTIEL") }/>
+                  <p>Residentiel</p>
+                </div>
+              </div>
+              
+              
             </div>
             
             <div className='w-full flex flex-col justfiy-start'>
