@@ -16,7 +16,7 @@ function PrivateRoute({ element, ...rest }: any) {
           setIsAuthenticated(false);
           return;
         }
-		setIsAuthenticated(true);
+		    setIsAuthenticated(true);
         // const response = await fetch('http://localhost:80/validatetoken', {
         //   method: 'POST',
         //   headers: {

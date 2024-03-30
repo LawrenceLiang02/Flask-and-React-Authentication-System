@@ -2,40 +2,60 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import NavBar from '../Components/navbar';
 import { Log, User } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 function Dashboard() {
   const username = localStorage.getItem('username');
   const user_role: string | null = localStorage.getItem('user_role');
   const [logs, setLogs] = useState<Log[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const token = localStorage.getItem('token');
-    console.log(token)
     if (token) {
-      axios.get<Log[]>('http://localhost:80/getLogs', {
-        headers: {
-          'x-access-tokens': token,
-        },
-      })
-      .then(logsResponse => {
-        console.log('Logs response:', logsResponse.data);
-        setLogs(logsResponse.data);
-        
-        // Fetch users after logs are fetched
-        return axios.get<User[]>('http://localhost:80/users', {
+      if (user_role == "ADMIN") {
+        axios.get<Log[]>('http://localhost:80/getLogs', {
           headers: {
             'x-access-tokens': token,
           },
+        })
+        .then(logsResponse => {
+          console.log('Logs response:', logsResponse.data);
+          setLogs(logsResponse.data);
+          return axios.post<User[]>('http://localhost:80/users', { "user_role": user_role }, {
+            headers: {
+              'x-access-tokens': token,
+            }
+          });
+        })
+        .then(usersResponse => {
+          console.log('Users response:', usersResponse.data);
+          setUsers(usersResponse.data);
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          // localStorage.removeItem('token');
+          // localStorage.removeItem('username');
+          // localStorage.removeItem('user_role');
+          // navigate("/login");
         });
-      })
-      .then(usersResponse => {
-        console.log('Users response:', usersResponse.data);
-        setUsers(usersResponse.data);
-      })
-      .catch(error => {
-        console.error('Error fetching data:', error);
-      });
+      }
+      else {
+        axios.post<User[]>('http://localhost:80/users', { "user_role": user_role }, {
+            headers: {
+              'x-access-tokens': token,
+            }
+          })
+        .then(usersResponse => {
+          console.log('Users response:', usersResponse.data);
+          setUsers(usersResponse.data);
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+        });
+      }
+
     }
   }, []);
 
@@ -72,7 +92,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className={`${user_role?.includes('ADMIN') ? 'bg-white pt-2 rounded-lg pb-2 shadow-lg':  'hidden'}`}>
+        <div className={`${user_role?.includes('ADMIN') || user_role?.includes('PREP') ? 'bg-white pt-2 rounded-lg pb-2 shadow-lg':  'hidden'}`}>
           <div className="font-semibold text-xl uppercase text-center underline pb-2">Clients</div>
           <div className=' overflow-y-auto h-80'>
             <table className="table-auto w-full text-center text-sm ">
