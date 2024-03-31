@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Pages/login';
 import Dashboard from './Pages/dashboard';
 import Signup from './Pages/signup';
+import ChangePassword from './Pages/changePassword';
 
 function PrivateRoute({ element, ...rest }: any) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -63,6 +64,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
+          <Route path="/changePassword" element={<PrivateRoute element={<ChangePassword />} />} />
         </Routes>
       </BrowserRouter>
     </>

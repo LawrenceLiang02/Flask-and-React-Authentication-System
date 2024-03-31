@@ -16,7 +16,13 @@ function Signup(){
         const numberRegex = /\d/;
         const specialCharacterRegex = /[$%#@!&]/;
         const validLength = password.length >= 8 && password.length <= 16;
-    
+        const lowercaseLetterRegex = /[a-z]/;
+
+        if (!lowercaseLetterRegex.test(password)) {
+          setErrorMessage('Password must contain at least one lowercase letter.');
+          return;
+        }
+
         if (!capitalLetterRegex.test(password)) {
           setErrorMessage('Password must contain at least one capital letter.');
           return;
