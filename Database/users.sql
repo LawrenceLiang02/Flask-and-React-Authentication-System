@@ -9,6 +9,8 @@ CREATE TABLE users(
     user_role ENUM('ADMIN', 'PREP_RESIDENTIEL', 'PREP_AFFAIRE', 'CLIENT_RESIDENTIEL', 'CLIENT_AFFAIRE') NOT NULL,
     salt varchar(100) NOT NULL,
     past_passwords VARCHAR(255),
+    session_token VARCHAR(255),
+    session_expiration INT,
     password_expiration_date INT,
     failed_login_attempts int DEFAULT 0,
     PRIMARY KEY(user_id)

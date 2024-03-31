@@ -6,6 +6,7 @@ import uuid
 import hashlib
 import jwt
 from functools import wraps
+import re
 
 from Roles import Roles
 from LogType import LogType
@@ -42,21 +43,38 @@ def token_required(*required_roles):
                     return jsonify({'message': 'token is invalid'}), 401
                 
                 expiration_time = data.get('exp')
-
                 if int(datetime.datetime.utcnow().timestamp()) > expiration_time:
                     return jsonify({'message': 'Token has expired'}), 401
 
             except Exception as ex:
                 return jsonify({'message': str(ex)}), 400
 
-            return f(*args, **kwargs)
+            return f(user, role, *args, **kwargs)
 
         return wrapper
     return decorator
 
-@app.route('/users', methods=['GET'])
-def getAllUsers():
-    return jsonify(db.getUsers()),200
+@app.route('/users', methods=['GET', 'POST'])
+@token_required(Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value)
+def getAllUsers(user, role):
+    try:
+        user_role = request.json["user_role"]
+        param = ""
+        if "ADMIN" in user_role:       
+            param = "ADMIN"
+        elif "AFFAIRE" in user_role:
+            param = "AFFAIRE"
+        elif "RESIDENTIEL" in user_role:
+            param = "RESIDENTIEL"
+        else:
+            print("It don't make sense")
+
+        users = db.getUsers(param)
+
+    except Exception as ex:
+        return jsonify({'error': str(ex)}), 400
+    
+    return jsonify(users),200
 
 
 @app.route('/signup', methods=['POST'])
@@ -64,18 +82,21 @@ def signup():
     try:
         username = request.json["username"]
         password = request.json["password"]
+        user_role = request.json["user_role"]
 
         if db.userExists(username):
             return jsonify({'error': 'username already taken'}), 400
 
-        role = Roles.CLIENT
+        isPwValid = is_valid_password(password)
+        if (isPwValid != True):
+            return jsonify({'error': isPwValid}), 400
 
         salt = generate_salt()
         hashed_password = hash_password(password, salt)
 
         password_expiration = int((datetime.datetime.utcnow() + datetime.timedelta(minutes=30)).timestamp())
 
-        db.createUser(username, hashed_password, role.value, salt, password_expiration)
+        db.createUser(username, hashed_password, user_role, salt, password_expiration)
         
         return jsonify({
             "message": "signup successful"
@@ -94,7 +115,7 @@ def login():
         result = db.getLoginValidation(auth.username)
 
         if result:
-            user_id, salt, user_password = result
+            user_id, user_role, username, salt, user_password = result
             hashed_password = hash_password(auth.password, salt)
 
             if hashed_password != user_password:
@@ -103,7 +124,9 @@ def login():
             
             token = jwt.encode({'id': user_id, 'username': auth.username,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config["SECRET_KEY"], algorithm="HS256")
             db.createLog(event_type=LogType.SUCCESS.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
-        return jsonify({'token': token})
+        else:
+            return jsonify({'error': 'User not found'}), 401
+        return jsonify({ 'user_role': user_role, 'token': token, 'username':username})
     
     except Exception as e:
         db.createLog(event_type=LogType.FAILURE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
@@ -112,32 +135,95 @@ def login():
 
 @app.route('/getUser', methods=['GET'])
 @token_required(Roles.ADMIN.value)
-def getUser():
+def getUser(user, role):
     return str("test")
 
 
 @app.route('/validatetoken', methods=['POST'])
-@token_required(Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIELS.value, Roles.CLIENT_RESIDENTIELS.value, Roles.CLIENT_AFFAIRE.value,)
-def validateToken():
+@token_required(Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value,)
+def validateToken(user, role):
     return jsonify({'message': 'token valid'}), 200
 
 
 @app.route('/getLogs', methods=['GET'])
 @token_required(Roles.ADMIN.value,)
-def getLogs():
+def getLogs(user, role):
     return jsonify(db.getLogs()), 200
 
 
-def updatePermissions():
-    return ""
+@app.route('/updatePassword', methods=['POST'])
+@token_required(Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value,)
+def updatePassword(user, role):
+    try:
+        oldPassword = request.json["oldPassword"]
+        newPassword = request.json["newPassword"]
+        
+        user_id, getOldPasword, salt = db.validateOldPassword(user)
+        if hash_password(oldPassword, salt) != getOldPasword:
+            return jsonify({'error': 'Wrong password'}), 401
+
+        isPwValid = is_valid_password(newPassword)
+        if (isPwValid != True):
+            return jsonify({'error': isPwValid}), 401
+
+        salt = generate_salt()
+        hashed_password = hash_password(newPassword, salt)
+
+        password_expiration = int((datetime.datetime.utcnow() + datetime.timedelta(minutes=30)).timestamp())
+
+        db.updatePassword(user, hashed_password, salt, password_expiration)
+        db.createLog(event_type=LogType.PASSWORD_CHANGE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
+    except Exception as ex:
+        return jsonify({'error': str(ex)}), 400
+    return jsonify({'message': 'password udpated'}), 200
 
 
-def getClients():
-    return ""
+@app.route('/updatePasswordAsAdmin', methods=['POST'])
+@token_required(Roles.ADMIN.value,)
+def updatePasswordAsAdmin(user, role):
+    try:
+        usernameJSON = request.json["username"]
+        newPassword = request.json["newPassword"]
+
+        user_id, username, user_role = db.getUserByUsername(usernameJSON)
+
+        isPwValid = is_valid_password(newPassword)
+        if (isPwValid != True):
+            return jsonify({'error': isPwValid}), 401
+
+        salt = generate_salt()
+        hashed_password = hash_password(newPassword, salt)
+
+        password_expiration = int((datetime.datetime.utcnow() + datetime.timedelta(minutes=30)).timestamp())
+
+        db.updatePassword(usernameJSON, hashed_password, salt, password_expiration)
+        db.createLog(event_type=LogType.PASSWORD_CHANGE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
+    except Exception as ex:
+        return jsonify({'error': str(ex)}), 400
+    return jsonify({'message': 'password udpated'}), 200
 
 
-def updatePassword():
-    return ""
+def is_valid_password(password):
+    lowercase_letter_regex = re.compile(r'[a-z]')
+    if not lowercase_letter_regex.search(password):
+        return "Password is missing a lowercase letter"
+
+    capital_letter_regex = re.compile(r'[A-Z]')
+    if not capital_letter_regex.search(password):
+        return "Password is missing a capital letter"
+
+    number_regex = re.compile(r'\d')
+    if not number_regex.search(password):
+        return "Password is missing a number"
+
+    special_character_regex = re.compile(r'[$%#@!&]')
+    if not special_character_regex.search(password):
+        return "Password is missing a special character"
+    
+    if not 8 <= len(password) <= 16:
+        return "Password is not between 8 and 16 characters"
+
+    return True
 
 
 def generate_salt():

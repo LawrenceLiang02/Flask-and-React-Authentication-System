@@ -6,3 +6,4 @@ class LogType(Enum):
     PASSWORD_CHANGE = "PASSWORD_CHANGE"
     LOGOUT = "LOGOUT"
     OTHER = "OTHER"
+    
