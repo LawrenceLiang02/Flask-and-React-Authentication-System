@@ -25,6 +25,7 @@ function Dashboard() {
         .then(logsResponse => {
           console.log('Logs response:', logsResponse.data);
           setLogs(logsResponse.data);
+          // console.log(user_role)
           return axios.post<User[]>('http://localhost:80/users', { "user_role": user_role }, {
             headers: {
               'x-access-tokens': token,

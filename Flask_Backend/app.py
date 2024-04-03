@@ -60,14 +60,16 @@ def getAllUsers(user, role):
     try:
         user_role = request.json["user_role"]
         param = ""
-        if "ADMIN" in user_role:       
-            param = "ADMIN"
-        elif "AFFAIRE" in user_role:
-            param = "AFFAIRE"
-        elif "RESIDENTIEL" in user_role:
-            param = "RESIDENTIEL"
-        else:
-            print("It don't make sense")
+        print(role == user_role)
+        if role == user_role:
+            if "ADMIN" in user_role:       
+                param = "ADMIN"
+            elif "AFFAIRE" in user_role:
+                param = "AFFAIRE"
+            elif "RESIDENTIEL" in user_role:
+                param = "RESIDENTIEL"
+            else:
+                print("It don't make sense")
 
         users = db.getUsers(param)
 
