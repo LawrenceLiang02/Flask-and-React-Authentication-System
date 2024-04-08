@@ -14,7 +14,6 @@ function PasswordComplexityForm  ()  {
 
   /**useEffect(() => {
     
-   // Fetch current password configuration when component mounts
    const fetchPasswordConfig = async () => {
     try {
       const response = await axios.get('http://localhost/getPasswordConfig', {
@@ -38,18 +37,16 @@ function PasswordComplexityForm  ()  {
     }
   };
 
-  fetchPasswordConfig(); // Invoke the function
+  fetchPasswordConfig(); 
 
   }, [token]);*/
   
   const handleSubmit = async (event: React.FormEvent) => {
     
     event.preventDefault();
-    // Gérer la soumission du formulaire ici, par exemple, validation des paramètres
-    // ou envoi des données à un serveur
+    
     
     try {
-      // Send form data to backend
       const response = await axios.post(
         'http://localhost/updatePasswordConfig', 
         {
@@ -71,14 +68,11 @@ function PasswordComplexityForm  ()  {
         console.log(response)
         navigate("/dashboard");
         window.location.reload();
-        // Optionally, show a success message to the user
       } else {
         console.error('Failed to update password configuration');
-        // Optionally, show an error message to the user
       }
     } catch (error) {
       console.error('Error updating password configuration:', error);
-      // Optionally, show an error message to the user
     }
   };
 
@@ -86,7 +80,7 @@ function PasswordComplexityForm  ()  {
 
   return (
     <div className='w-full min-h-screen h-full bg-gray-100 pb-20'>
-      {/* Insérer le composant NavBar ici si nécessaire */}
+      {}
       <div className='h-fit w-full flex flex-row items-center justify-around bg-slate-100 py-40'>
         <div className='z-10 bg-white flex flex-col items-start justify-between px-20 py-20 shadow-lg rounded-2xl hover:shadow-2xl space-y-8 ease-in-out duration-500 transition-all '>
           <div className='text-3xl font-semibold tracking-wider'>Gestion de la Complexité du Mot de Passe</div>

@@ -214,9 +214,7 @@ def updatePasswordConfig(user, role):
         require_numbers = request.json["require_numbers"]
         require_special_chars = request.json["require_special_chars"]
 
-        # Optionally, perform validation here if needed
 
-        # Store the changes in the database
         db.updatePasswordConfig(min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars)
 
         return jsonify({'message': 'Password configuration updated successfully'}), 200
