@@ -204,28 +204,55 @@ def updatePasswordAsAdmin(user, role):
         return jsonify({'error': str(ex)}), 400
     return jsonify({'message': 'password udpated'}), 200
 
+@app.route('/updatePasswordConfig', methods=['POST'])
+@token_required(Roles.ADMIN.value)
+def updatePasswordConfig(user, role):
+    try:
+        min_length = request.json["min_length"]
+        require_lowercase = request.json["require_lowercase"]
+        require_uppercase = request.json["require_uppercase"]
+        require_numbers = request.json["require_numbers"]
+        require_special_chars = request.json["require_special_chars"]
+
+        # Optionally, perform validation here if needed
+
+        # Store the changes in the database
+        db.updatePasswordConfig(min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars)
+
+        return jsonify({'message': 'Password configuration updated successfully'}), 200
+    except Exception as ex:
+        return jsonify({'error': str(ex)}), 400
+     
+@app.route('/getPasswordConfig', methods=['GET'])
+@token_required(Roles.ADMIN.value)
+def getPasswordConfig(user, role):
+    try:
+        config = db.getPasswordConfiguration()
+        return jsonify(config),200
+    except Exception as ex:
+        return jsonify({'error': str(ex)}), 400
+
 
 def is_valid_password(password):
-    lowercase_letter_regex = re.compile(r'[a-z]')
-    if not lowercase_letter_regex.search(password):
+
+    min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars = db.getPasswordConfiguration2()
+    if require_lowercase and not re.search(r'[a-z]', password):
         return "Password is missing a lowercase letter"
 
-    capital_letter_regex = re.compile(r'[A-Z]')
-    if not capital_letter_regex.search(password):
+    if require_uppercase and not re.search(r'[A-Z]', password):
         return "Password is missing a capital letter"
 
-    number_regex = re.compile(r'\d')
-    if not number_regex.search(password):
+    if require_numbers and not re.search(r'\d', password):
         return "Password is missing a number"
 
-    special_character_regex = re.compile(r'[$%#@!&]')
-    if not special_character_regex.search(password):
+    if require_special_chars and not re.search(r'[$%#@!&]', password):
         return "Password is missing a special character"
     
-    if not 8 <= len(password) <= 16:
-        return "Password is not between 8 and 16 characters"
+    if not min_length <= len(password) :
+        return "Password is less then " + str(min_length) + " characters"
 
     return True
+
 
 
 def generate_salt():

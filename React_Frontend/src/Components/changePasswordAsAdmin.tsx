@@ -15,37 +15,6 @@ function ChangePasswordAsAdmin({username}:any) {
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
 
-        const capitalLetterRegex = /[A-Z]/;
-        const numberRegex = /\d/;
-        const specialCharacterRegex = /[$%#@!&]/;
-        const validLength = newPassword.length >= 8 && newPassword.length <= 16;
-        const lowercaseLetterRegex = /[a-z]/;
-
-        if (!lowercaseLetterRegex.test(newPassword)) {
-          setErrorMessage('Password must contain at least one lowercase letter.');
-          return;
-        }
-
-        if (!capitalLetterRegex.test(newPassword)) {
-          setErrorMessage('Password must contain at least one capital letter.');
-          return;
-        }
-    
-        if (!numberRegex.test(newPassword)) {
-          setErrorMessage('Password must contain at least one number.');
-          return;
-        }
-    
-        if (!specialCharacterRegex.test(newPassword)) {
-          setErrorMessage('Password must contain at least one special character ($%#@!&).');
-          return;
-        }
-    
-        if (!validLength) {
-          setErrorMessage('Password must be between 8 to 16 characters in length.');
-          return;
-        }
-        
         try {
         const response = await axios.post(
             'http://localhost/updatePasswordAsAdmin',

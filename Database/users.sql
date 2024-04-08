@@ -26,6 +26,19 @@ CREATE TABLE security_log (
     PRIMARY KEY(log_id)
 );
 
+use lab5db;
+
+CREATE TABLE password_config_changes (
+    change_id INT NOT NULL AUTO_INCREMENT,
+    min_length INT NOT NULL,
+    require_lowercase BOOLEAN NOT NULL,
+    require_uppercase BOOLEAN NOT NULL,
+    require_numbers BOOLEAN NOT NULL,
+    require_special_chars BOOLEAN NOT NULL,
+    change_date INT,
+    PRIMARY KEY (change_id)
+);
+
 INSERT INTO users(username, user_password, salt, user_role) 
 VALUES 
 ('Admin', 'd07a567a0d46b7309451b5bfaf2e076684f7e7035aea6e21a694e7f2932fb056', 'b5ba71acfd9a42318a2427d0ceac4392', 'ADMIN'),
@@ -40,3 +53,4 @@ VALUES
 ;
 
 INSERT INTO security_log(event_time, event_type, user_id) VALUES (1711593766, "LOGIN_SUCCESS", 1);
+INSERT INTO password_config_changes(min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars) VALUES (8, TRUE, TRUE, TRUE, TRUE);

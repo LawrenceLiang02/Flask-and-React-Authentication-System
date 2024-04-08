@@ -16,7 +16,7 @@ function Navbar() {
         <div className="flex flex-row justify-around items-start">
           <a href="/dashboard" ><button className="nav-button">Dashboard</button></a>
           {user_role?.includes('ADMIN') && <a href="/dashboard" ><button className="nav-button">Logs</button></a>}
-          {user_role?.includes('ADMIN') && <a href="/dashboard" ><button className="nav-button">Parametres</button></a>}
+          {user_role?.includes('ADMIN') && <a href="/passwordComplexityForm" ><button className="nav-button">Parametres</button></a>}
           {(user_role?.includes('ADMIN') || user_role?.includes('PREP')) && <a href="/dashboard"><button className="nav-button">Clients</button></a>}
         </div>
         <div className="flex flex-row justify-around items-end space-x-8">

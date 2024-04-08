@@ -9,14 +9,18 @@ function Signup(){
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState('');
   
+    
+
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
 
-        const capitalLetterRegex = /[A-Z]/;
+        /**const capitalLetterRegex = /[A-Z]/;
         const numberRegex = /\d/;
         const specialCharacterRegex = /[$%#@!&]/;
         const validLength = password.length >= 8 && password.length <= 16;
         const lowercaseLetterRegex = /[a-z]/;
+
+
 
         if (!lowercaseLetterRegex.test(password)) {
           setErrorMessage('Password must contain at least one lowercase letter.');
@@ -41,7 +45,7 @@ function Signup(){
         if (!validLength) {
           setErrorMessage('Password must be between 8 to 16 characters in length.');
           return;
-        }
+        }*/
         
         try {
             const response = await axios.post(

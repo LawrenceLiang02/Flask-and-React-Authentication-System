@@ -16,6 +16,7 @@ class dbOperations():
         data = mycursor.fetchall()
         json_data = [dict(zip([column[0] for column in mycursor.description], row)) for row in data]
         return json_data
+    
 
     def createUser(self, username, password, role, salt, pwExpTimestamp):
         mycursor = connection.cursor(buffered=False)
@@ -92,3 +93,26 @@ class dbOperations():
         val = (hashed_password, salt, password_expiration, username)
         mycursor.execute(sql, val)
         connection.commit()
+
+    def updatePasswordConfig(self, min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars):
+        mycursor = connection.cursor(buffered=False)
+        sql = "UPDATE password_config_changes SET min_length = %s, require_lowercase = %s, require_uppercase = %s, require_numbers = %s, require_special_chars = %s;"
+        val = (min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars)
+        mycursor.execute(sql, val)
+        connection.commit()
+
+    def getPasswordConfiguration(self):
+        mycursor = connection.cursor(buffered=False)
+        sql = "SELECT min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars FROM password_config_changes;"
+        mycursor.execute(sql)
+        data = mycursor.fetchall()
+        print(data)
+        json_data = [dict(zip([column[0] for column in mycursor.description], row)) for row in data]
+        return json_data
+
+    def getPasswordConfiguration2(self):
+        mycursor = connection.cursor(buffered=False)
+        sql = "SELECT min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars FROM password_config_changes;"
+        mycursor.execute(sql)
+        data = mycursor.fetchone()
+        return data

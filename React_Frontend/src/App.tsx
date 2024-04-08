@@ -4,6 +4,9 @@ import Login from './Pages/login';
 import Dashboard from './Pages/dashboard';
 import Signup from './Pages/signup';
 import ChangePassword from './Pages/changePassword';
+import parameters from './Pages/passwordComplexityForm'
+import { PassThrough } from 'stream';
+import PasswordComplexityForm from './Pages/passwordComplexityForm';
 
 function PrivateRoute({ element, ...rest }: any) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -65,6 +68,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
           <Route path="/changePassword" element={<PrivateRoute element={<ChangePassword />} />} />
+          <Route path="/passwordComplexityForm" element={<PrivateRoute element={<PasswordComplexityForm />} />} />
         </Routes>
       </BrowserRouter>
     </>
