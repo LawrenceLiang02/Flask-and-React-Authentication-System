@@ -33,6 +33,6 @@ Force Push (only after using rebase):
 
 
 ## Run Project
-Frontend: ```cd dans React_Frontend``` et  ```npm run start```
+Frontend: ```cd React_Frontend``` et  ```npm run start```
 
 Backend and Database with Docker: ```docker-compose up --build```
