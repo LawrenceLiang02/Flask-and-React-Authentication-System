@@ -10,13 +10,14 @@ function ChangePassword() {
     const navigate = useNavigate();
 
     const token = localStorage.getItem('token');
+    const role = localStorage.getItem('user_role')
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
 
         try {
         const response = await axios.post(
-            'http://localhost/updatePassword',
+            'https://localhost:80/updatePassword',
             {
                 "oldPassword":oldPassword,
                 "newPassword":newPassword
@@ -53,6 +54,7 @@ function ChangePassword() {
             <div className='text-3xl font-semibold tracking-wider'>CHANGER LE MOT DE PASSE</div>
 
             <form onSubmit={handleSubmit} className='space-y-4 flex flex-col items-center justify-between w-full'>
+            {role === "TEMPORAIRE" && <div className="text-red-600">Mot de passe expiré.</div>}
             {errorMessage && <div className="text-red-600">{errorMessage}</div>}
             <div className={`flex flex-row items-start justify-between space-x-2 w-full`}>
                 <p className='text-lg font-semibold'>Ancien mot de passe: </p>

@@ -36,16 +36,20 @@ def token_required(*required_roles):
                 data = jwt.decode(token, app.config["SECRET_KEY"], algorithms="HS256")
                 user, role =  db.getTokenValidationById(data.get('id'))
 
-                if role not in required_roles:
+                if data.get('user_role') != Roles.TEMPORARY.value:
+                    if role not in required_roles :
+                        return jsonify({'message': 'insufficient permissions'}), 403
+                    
+                    if user != data.get('username'):
+                        return jsonify({'message': 'token is invalid'}), 401
+                    
+                    expiration_time = data.get('exp')
+                    if int(datetime.datetime.utcnow().timestamp()) > expiration_time:
+                        return jsonify({'message': 'Token has expired'}), 401
+                    
+                elif data.get('user_role') not in required_roles:
                     return jsonify({'message': 'insufficient permissions'}), 403
                 
-                if user != data.get('username'):
-                    return jsonify({'message': 'token is invalid'}), 401
-                
-                expiration_time = data.get('exp')
-                if int(datetime.datetime.utcnow().timestamp()) > expiration_time:
-                    return jsonify({'message': 'Token has expired'}), 401
-
             except Exception as ex:
                 return jsonify({'message': str(ex)}), 400
 
@@ -60,7 +64,7 @@ def getAllUsers(user, role):
     try:
         user_role = request.json["user_role"]
         param = ""
-        print(role == user_role)
+
         if role == user_role:
             if "ADMIN" in user_role:       
                 param = "ADMIN"
@@ -96,9 +100,9 @@ def signup():
         salt = generate_salt()
         hashed_password = hash_password(password, salt)
 
-        password_expiration = int((datetime.datetime.utcnow() + datetime.timedelta(minutes=30)).timestamp())
+        pw_creation = int((datetime.datetime.utcnow()).timestamp())
 
-        db.createUser(username, hashed_password, user_role, salt, password_expiration)
+        db.createUser(username, hashed_password, user_role, salt, pw_creation)
         
         return jsonify({
             "message": "signup successful"
@@ -117,14 +121,28 @@ def login():
         result = db.getLoginValidation(auth.username)
 
         if result:
-            user_id, user_role, username, salt, user_password = result
+            user_id, user_role, username, salt, user_password, failed_login_attempts, next_login_time, password_creation = result
             hashed_password = hash_password(auth.password, salt)
+
+            if failed_login_attempts is not None and failed_login_attempts > 3:
+                return jsonify({'error': 'Too many failed attempts, please contact an Admin to reset your password'}), 401
+
+            if next_login_time is not None and datetime.datetime.utcnow().timestamp() < next_login_time:
+                return jsonify({'error': 'Due to failed attempt, you can not login until ' + datetime.datetime.fromtimestamp(next_login_time).strftime('%Y-%m-%d %H:%M:%S')}), 401
 
             if hashed_password != user_password:
                 db.createLog(event_type=LogType.FAILURE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
+                next_login_time = (datetime.datetime.utcnow() + datetime.timedelta(minutes=1)).timestamp()
+                db.updateLoginFail(username, failed_login_attempts + 1, next_login_time)
                 return jsonify({'error': 'Wrong password'}), 401
             
-            token = jwt.encode({'id': user_id, 'username': auth.username,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config["SECRET_KEY"], algorithm="HS256")
+            password_expiration = (datetime.datetime.fromtimestamp(password_creation) + datetime.timedelta(minutes=1)).timestamp()
+            if password_creation is not None and datetime.datetime.utcnow().timestamp() > password_expiration:
+                token = jwt.encode({'id': user_id, 'username': auth.username, 'user_role': Roles.TEMPORARY.value,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config["SECRET_KEY"], algorithm="HS256")
+                return jsonify({'error': 'The password has expired, please reset the password.', 'username': username, 'user_role':user_role, 'token':token}), 403
+            
+            db.updateLoginFail(username, 0, None)
+            token = jwt.encode({'id': user_id, 'username': auth.username, 'user_role': user_role,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config["SECRET_KEY"], algorithm="HS256")
             db.createLog(event_type=LogType.SUCCESS.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
         else:
             return jsonify({'error': 'User not found'}), 401
@@ -153,8 +171,35 @@ def getLogs(user, role):
     return jsonify(db.getLogs()), 200
 
 
+@app.route('/updateRole', methods=['POST'])
+@token_required(Roles.ADMIN.value,)
+def updateRole(user, role):
+    try:
+        usernameJSON = request.json["username"]
+        newRole = request.json["new_role"]
+
+        print(newRole)
+        
+        if (newRole == Roles.ADMIN.value):
+            return jsonify({'error': "You can't change this to an admin. In fact, nobody can."}), 401
+        
+        if (newRole != Roles.PREP_AFFAIRE.value or newRole != Roles.PREP_RESIDENTIEL.value or newRole != Roles.CLIENT_AFFAIRE.value or newRole != Roles.CLIENT_RESIDENTIEL.value):
+            return jsonify({'error': "Role Invalide."}), 401
+
+        user_id, user_role, username = db.getUserByUsername(usernameJSON)
+
+        if (newRole == user_role):
+            return jsonify({'error': "C'est deja ce role"}), 401
+
+        db.updateRole(username, newRole)
+        db.createLog(event_type=LogType.ROLE_CHANGE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
+    except Exception as ex:
+        return jsonify({'error': str(ex)}), 400
+    return jsonify({'message': 'role updated'}), 200
+
+
 @app.route('/updatePassword', methods=['POST'])
-@token_required(Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value,)
+@token_required(Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value, Roles.TEMPORARY.value,)
 def updatePassword(user, role):
     try:
         oldPassword = request.json["oldPassword"]
@@ -171,9 +216,9 @@ def updatePassword(user, role):
         salt = generate_salt()
         hashed_password = hash_password(newPassword, salt)
 
-        password_expiration = int((datetime.datetime.utcnow() + datetime.timedelta(minutes=30)).timestamp())
+        pw_creation = int((datetime.datetime.utcnow()).timestamp())
 
-        db.updatePassword(user, hashed_password, salt, password_expiration)
+        db.updatePassword(user, hashed_password, salt, pw_creation)
         db.createLog(event_type=LogType.PASSWORD_CHANGE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
     except Exception as ex:
         return jsonify({'error': str(ex)}), 400
@@ -196,9 +241,9 @@ def updatePasswordAsAdmin(user, role):
         salt = generate_salt()
         hashed_password = hash_password(newPassword, salt)
 
-        password_expiration = int((datetime.datetime.utcnow() + datetime.timedelta(minutes=30)).timestamp())
+        pw_creation = int((datetime.datetime.utcnow()).timestamp())
 
-        db.updatePassword(usernameJSON, hashed_password, salt, password_expiration)
+        db.updatePassword(usernameJSON, hashed_password, salt, pw_creation)
         db.createLog(event_type=LogType.PASSWORD_CHANGE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
     except Exception as ex:
         return jsonify({'error': str(ex)}), 400
@@ -264,4 +309,4 @@ def hash_password(password, salt, iterations=1000):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0', ssl_context=('cert.pem', 'key.pem'))

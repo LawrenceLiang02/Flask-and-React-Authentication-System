@@ -17,7 +17,7 @@ function ChangePasswordAsAdmin({username}:any) {
 
         try {
         const response = await axios.post(
-            'http://localhost/updatePasswordAsAdmin',
+            'https://localhost:80/updatePasswordAsAdmin',
             {
                 "username":username,
                 "newPassword":newPassword

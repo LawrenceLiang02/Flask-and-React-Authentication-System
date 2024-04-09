@@ -8,6 +8,20 @@ function Login() {
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
+  const https = require('https');
+
+  const agent = new https.Agent({
+    rejectUnauthorized: false,
+    requestCert: false,
+    agent: false,
+  });
+
+  const client = axios.create({
+    baseURL: 'https://localhost:80',
+    responseType: 'json',
+    httpsAgent: agent
+});
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -15,13 +29,14 @@ function Login() {
       const basicAuth = btoa(`${username}:${password}`);
 
       const response = await axios.post(
-        'http://localhost/login',
+        'https://localhost:80/login',
         {},
         {
           headers: {
             Authorization: `Basic ${basicAuth}`
-          }
-        }
+          },
+          
+        },
       );
 
       if (response.status === 200) {
@@ -33,13 +48,25 @@ function Login() {
         localStorage.setItem('user_role', user_role);
         localStorage.setItem('username', username);
         navigate('/dashboard');
-      } else {
+      }
+      else {
         alert('Login failed');
         console.log("Login Failed")
       }
     } catch (error:any) {
-      setErrorMessage('Error: ' + error.response.data.error);
-      console.error('Error during login:', error);
+      console.log(error.response.status)
+      if (error.response.status == 403) {
+        const username = error.response.data.username;
+        const token = error.response.data.token;
+        localStorage.setItem('user_role', "TEMPORAIRE");
+        localStorage.setItem('username', username);
+        localStorage.setItem('token', token);
+        navigate('/changePassword');
+      }
+      else {
+        setErrorMessage('Error: ' + error.response.data.error);
+        console.error('Error during login:', error);
+      }
     }
   };
 

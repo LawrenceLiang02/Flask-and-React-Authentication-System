@@ -49,7 +49,7 @@ function Signup(){
         
         try {
             const response = await axios.post(
-                'http://localhost/signup',
+                'https://localhost:80/signup',
                 {
                     username: username,
                     password: password,

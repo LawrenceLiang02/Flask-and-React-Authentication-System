@@ -12,7 +12,7 @@ function Navbar() {
     navigate("/login");
   }
   return (
-    <div className="w-full sticky top-0 left-0 flex flex-row items-center justify-around bg-blue-400 py-4 shadow-xl">
+    <div className="w-full sticky z-10 top-0 left-0 flex flex-row items-center justify-around bg-blue-400 py-4 shadow-xl">
         <div className="flex flex-row justify-around items-start">
           <a href="/dashboard" ><button className="nav-button">Dashboard</button></a>
           {user_role?.includes('ADMIN') && <a href="/dashboard" ><button className="nav-button">Logs</button></a>}

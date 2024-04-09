@@ -4,6 +4,7 @@ import NavBar from '../Components/navbar';
 import { Log, User } from '../types';
 import { useNavigate } from 'react-router-dom';
 import ChangePasswordAsAdmin from '../Components/changePasswordAsAdmin';
+import ChangeRole from '../Components/changeRole';
 
 function Dashboard() {
   const username = localStorage.getItem('username');
@@ -11,13 +12,14 @@ function Dashboard() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [changePwPopUp, setChangePwPopUp] = useState('');
+  const [changeRolePopUp, setChangeRolePopUp] = useState('');
   const navigate = useNavigate();
   
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       if (user_role == "ADMIN") {
-        axios.get<Log[]>('http://localhost:80/getLogs', {
+        axios.get<Log[]>('https://localhost:80/getLogs', {
           headers: {
             'x-access-tokens': token,
           },
@@ -26,7 +28,7 @@ function Dashboard() {
           console.log('Logs response:', logsResponse.data);
           setLogs(logsResponse.data);
           // console.log(user_role)
-          return axios.post<User[]>('http://localhost:80/users', { "user_role": user_role }, {
+          return axios.post<User[]>('https://localhost:80/users', { "user_role": user_role }, {
             headers: {
               'x-access-tokens': token,
             }
@@ -45,7 +47,7 @@ function Dashboard() {
         });
       }
       else {
-        axios.post<User[]>('http://localhost:80/users', { "user_role": user_role }, {
+        axios.post<User[]>('https://localhost:80/users', { "user_role": user_role }, {
             headers: {
               'x-access-tokens': token,
             }
@@ -63,9 +65,10 @@ function Dashboard() {
   }, []);
 
   return (
-    <div className='w-full min-h-screen h-full bg-gray-100 pb-20'>
+    <div className='relative inset-y-0 w-full min-h-screen h-full bg-gray-100 pb-20'>
               
       {changePwPopUp && <ChangePasswordAsAdmin username={changePwPopUp}></ChangePasswordAsAdmin>}
+      {changeRolePopUp && <ChangeRole username={changeRolePopUp}></ChangeRole>}
       <NavBar />
 
       <div className="mx-[20%] mt-8 flex flex-col space-y-8">
@@ -117,7 +120,7 @@ function Dashboard() {
                     <td className='font-scp_mono'> {user.username}</td>
                     <td className='font-scp_mono'> {user.user_role}</td>
                     <td className={`${user_role?.includes('ADMIN') ? '':  'hidden'}`}><button onClick={() => setChangePwPopUp(user.username)} className='bg-blue-400 hover:bg-blue-500 hover:scale-[105%] rounded-lg text-white font-semibold uppercase px-2 py-1'>Changer le mot de passe</button></td>
-                    <td className={`${user_role?.includes('ADMIN') ? '':  'hidden'}`}><button className='bg-blue-400 hover:bg-blue-500 hover:scale-[105%] rounded-lg text-white font-semibold uppercase px-2 py-1'>Changer le role</button></td>
+                    <td className={`${user_role?.includes('ADMIN') ? '':  'hidden'}`}><button onClick={() => setChangeRolePopUp(user.username)} className='bg-blue-400 hover:bg-blue-500 hover:scale-[105%] rounded-lg text-white font-semibold uppercase px-2 py-1'>Changer le role</button></td>
                   </tr>
                 ))}
               </tbody>

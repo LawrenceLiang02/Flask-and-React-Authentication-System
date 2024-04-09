@@ -20,18 +20,25 @@ class dbOperations():
 
     def createUser(self, username, password, role, salt, pwExpTimestamp):
         mycursor = connection.cursor(buffered=False)
-        sql = "INSERT INTO users (username, user_password, user_role, salt, password_expiration_date) VALUES (%s , %s, %s, %s, %s);"
+        sql = "INSERT INTO users (username, user_password, user_role, salt, password_creation_date) VALUES (%s , %s, %s, %s, %s);"
         val = (username, password, role, salt, pwExpTimestamp)
         mycursor.execute(sql, val)
         connection.commit()
     
     def getLoginValidation(self, username):
         mycursor = connection.cursor(buffered=False)
-        sql = ("SELECT user_id, user_role, username, salt, user_password FROM users WHERE username = %s;")
+        sql = ("SELECT user_id, user_role, username, salt, user_password, failed_login_attempts, next_login_time, password_creation_date FROM users WHERE username = %s;")
         val = (username,)
         mycursor.execute(sql, val)
         data = mycursor.fetchone()
         return data
+    
+    def updateLoginFail(self, username, attempts, next_login_time):
+        mycursor = connection.cursor(buffered=False)
+        sql = "UPDATE users SET failed_login_attempts = %s, next_login_time = %s WHERE username = %s; "
+        val = (attempts, next_login_time, username)
+        mycursor.execute(sql, val)
+        connection.commit()
     
     def getUserByUsername(self, username):
         mycursor = connection.cursor(buffered=False)
@@ -87,9 +94,17 @@ class dbOperations():
             return None
 
 
+    def updateRole(self, username, user_role):
+        mycursor = connection.cursor(buffered=False)
+        sql = "UPDATE users SET user_role = %s WHERE username = %s; "
+        val = (user_role, username)
+        mycursor.execute(sql, val)
+        connection.commit()
+
+
     def updatePassword(self, username, hashed_password, salt, password_expiration):
         mycursor = connection.cursor(buffered=False)
-        sql = "UPDATE users SET user_password = %s, salt = %s, password_expiration_date = %s WHERE username = %s; "
+        sql = "UPDATE users SET user_password = %s, salt = %s, password_creation_date = %s WHERE username = %s; "
         val = (hashed_password, salt, password_expiration, username)
         mycursor.execute(sql, val)
         connection.commit()
