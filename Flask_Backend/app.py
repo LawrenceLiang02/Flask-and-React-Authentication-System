@@ -19,6 +19,8 @@ app.config['SECRET_KEY'] = 'Th1s1ss3cr3t'
 
 db = dbOperations()
 
+token_expiration_time = 30
+
 def token_required(*required_roles):
     def decorator(f):
         @wraps(f)
@@ -119,12 +121,13 @@ def login():
             return make_response('could not verify', 401, {'WWW.Authentication': 'Basic realm: "login required"'})
 
         result = db.getLoginValidation(auth.username)
+        password_expiration_time, nb_tentative, tentative_intervale = db.getLoginConfig()
 
         if result:
             user_id, user_role, username, salt, user_password, failed_login_attempts, next_login_time, password_creation = result
             hashed_password = hash_password(auth.password, salt)
 
-            if failed_login_attempts is not None and failed_login_attempts > 3:
+            if failed_login_attempts is not None and failed_login_attempts > nb_tentative:
                 return jsonify({'error': 'Too many failed attempts, please contact an Admin to reset your password'}), 401
 
             if next_login_time is not None and datetime.datetime.utcnow().timestamp() < next_login_time:
@@ -132,24 +135,23 @@ def login():
 
             if hashed_password != user_password:
                 db.createLog(event_type=LogType.FAILURE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
-                next_login_time = (datetime.datetime.utcnow() + datetime.timedelta(minutes=1)).timestamp()
+                next_login_time = (datetime.datetime.utcnow() + datetime.timedelta(minutes=tentative_intervale)).timestamp()
                 db.updateLoginFail(username, failed_login_attempts + 1, next_login_time)
                 return jsonify({'error': 'Wrong password'}), 401
             
-            password_expiration = (datetime.datetime.fromtimestamp(password_creation) + datetime.timedelta(minutes=1)).timestamp()
+            password_expiration = (datetime.datetime.fromtimestamp(password_creation) + datetime.timedelta(minutes=password_expiration_time)).timestamp()
             if password_creation is not None and datetime.datetime.utcnow().timestamp() > password_expiration:
-                token = jwt.encode({'id': user_id, 'username': auth.username, 'user_role': Roles.TEMPORARY.value,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config["SECRET_KEY"], algorithm="HS256")
+                token = jwt.encode({'id': user_id, 'username': auth.username, 'user_role': Roles.TEMPORARY.value,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=token_expiration_time)}, app.config["SECRET_KEY"], algorithm="HS256")
                 return jsonify({'error': 'The password has expired, please reset the password.', 'username': username, 'user_role':user_role, 'token':token}), 403
             
             db.updateLoginFail(username, 0, None)
-            token = jwt.encode({'id': user_id, 'username': auth.username, 'user_role': user_role,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config["SECRET_KEY"], algorithm="HS256")
+            token = jwt.encode({'id': user_id, 'username': auth.username, 'user_role': user_role,'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=token_expiration_time)}, app.config["SECRET_KEY"], algorithm="HS256")
             db.createLog(event_type=LogType.SUCCESS.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
         else:
             return jsonify({'error': 'User not found'}), 401
         return jsonify({ 'user_role': user_role, 'token': token, 'username':username})
     
     except Exception as e:
-        db.createLog(event_type=LogType.FAILURE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
         return jsonify({'error': str(e)}), 400
 
 
@@ -249,18 +251,23 @@ def updatePasswordAsAdmin(user, role):
         return jsonify({'error': str(ex)}), 400
     return jsonify({'message': 'password udpated'}), 200
 
+
 @app.route('/updatePasswordConfig', methods=['POST'])
 @token_required(Roles.ADMIN.value)
 def updatePasswordConfig(user, role):
     try:
         min_length = request.json["min_length"]
+        max_length = request.json["max_length"]
         require_lowercase = request.json["require_lowercase"]
         require_uppercase = request.json["require_uppercase"]
         require_numbers = request.json["require_numbers"]
         require_special_chars = request.json["require_special_chars"]
-
-
-        db.updatePasswordConfig(min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars)
+        password_expiration_time = request.json["password_expiration_time"]
+        nb_tentative = request.json["nb_tentative"]
+        tentative_intervale = request.json["tentative_intervale"]
+        nb_mdp_ancien = request.json["nb_mdp_ancien"]
+        
+        db.updatePasswordConfig(min_length, max_length, require_lowercase, require_uppercase, require_numbers, require_special_chars, password_expiration_time, tentative_intervale, nb_tentative, nb_mdp_ancien )
 
         return jsonify({'message': 'Password configuration updated successfully'}), 200
     except Exception as ex:
@@ -270,15 +277,18 @@ def updatePasswordConfig(user, role):
 @token_required(Roles.ADMIN.value)
 def getPasswordConfig(user, role):
     try:
-        config = db.getPasswordConfiguration()
+        config = db.getPasswordConfigurationJSON()
         return jsonify(config),200
     except Exception as ex:
         return jsonify({'error': str(ex)}), 400
 
 
 def is_valid_password(password):
+    min_length, max_length, require_lowercase, require_uppercase, require_numbers, require_special_chars = db.getPasswordConfiguration()
+    
+    if ' ' in password:
+        return "Password cannot contain spaces"
 
-    min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars = db.getPasswordConfiguration2()
     if require_lowercase and not re.search(r'[a-z]', password):
         return "Password is missing a lowercase letter"
 
@@ -291,11 +301,10 @@ def is_valid_password(password):
     if require_special_chars and not re.search(r'[$%#@!&]', password):
         return "Password is missing a special character"
     
-    if not min_length <= len(password) :
-        return "Password is less then " + str(min_length) + " characters"
+    if len(password) < min_length or len(password) > max_length:
+        return "Password must be between " + str(min_length) + " and " + str(max_length) + " characters"
 
     return True
-
 
 
 def generate_salt():

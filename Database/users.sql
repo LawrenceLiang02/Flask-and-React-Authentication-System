@@ -32,10 +32,15 @@ use lab5db;
 CREATE TABLE password_config_changes (
     change_id INT NOT NULL AUTO_INCREMENT,
     min_length INT NOT NULL,
+    max_length INT NOT NULL,
     require_lowercase BOOLEAN NOT NULL,
     require_uppercase BOOLEAN NOT NULL,
     require_numbers BOOLEAN NOT NULL,
     require_special_chars BOOLEAN NOT NULL,
+    password_expiration_time INT NOT NULL,
+    tentative_intervale INT NOT NULL,
+    nb_tentative INT NOT NULL,
+    nb_mdp_ancien INT NOT NULL,
     change_date INT,
     PRIMARY KEY (change_id)
 );
@@ -54,4 +59,4 @@ VALUES
 ;
 
 INSERT INTO security_log(event_time, event_type, user_id) VALUES (1711593766, "LOGIN_SUCCESS", 1);
-INSERT INTO password_config_changes(min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars) VALUES (8, TRUE, TRUE, TRUE, TRUE);
+INSERT INTO password_config_changes(min_length, max_length, require_lowercase, require_uppercase, require_numbers, require_special_chars, password_expiration_time, tentative_intervale, nb_tentative, nb_mdp_ancien) VALUES (8, 16, TRUE, TRUE, TRUE, TRUE, 30, 1, 3, 3);

@@ -109,25 +109,31 @@ class dbOperations():
         mycursor.execute(sql, val)
         connection.commit()
 
-    def updatePasswordConfig(self, min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars):
+    def updatePasswordConfig(self, min_length, max_length, require_lowercase, require_uppercase, require_numbers, require_special_chars, password_expiration_time, tentative_intervale, nb_tentative, nb_mdp_ancien ):
         mycursor = connection.cursor(buffered=False)
-        sql = "UPDATE password_config_changes SET min_length = %s, require_lowercase = %s, require_uppercase = %s, require_numbers = %s, require_special_chars = %s;"
-        val = (min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars)
+        sql = "UPDATE password_config_changes SET min_length = %s, max_length = %s, require_lowercase = %s, require_uppercase = %s, require_numbers = %s, require_special_chars = %s, password_expiration_time = %s, tentative_intervale = %s, nb_tentative = %s, nb_mdp_ancien = %s  ;"
+        val = (min_length, max_length, require_lowercase, require_uppercase, require_numbers, require_special_chars, password_expiration_time, tentative_intervale, nb_tentative, nb_mdp_ancien)
         mycursor.execute(sql, val)
         connection.commit()
 
-    def getPasswordConfiguration(self):
+    def getPasswordConfigurationJSON(self):
         mycursor = connection.cursor(buffered=False)
-        sql = "SELECT min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars FROM password_config_changes;"
+        sql = "SELECT min_length, max_length, require_lowercase, require_uppercase, require_numbers, require_special_chars, password_expiration_time, tentative_intervale, nb_tentative, nb_mdp_ancien FROM password_config_changes;"
         mycursor.execute(sql)
         data = mycursor.fetchall()
-        print(data)
         json_data = [dict(zip([column[0] for column in mycursor.description], row)) for row in data]
         return json_data
 
-    def getPasswordConfiguration2(self):
+    def getPasswordConfiguration(self):
         mycursor = connection.cursor(buffered=False)
-        sql = "SELECT min_length, require_lowercase, require_uppercase, require_numbers, require_special_chars FROM password_config_changes;"
+        sql = "SELECT min_length, max_length, require_lowercase, require_uppercase, require_numbers, require_special_chars FROM password_config_changes;"
+        mycursor.execute(sql)
+        data = mycursor.fetchone()
+        return data
+    
+    def getLoginConfig(self):
+        mycursor = connection.cursor(buffered=False)
+        sql = "SELECT password_expiration_time, nb_tentative, tentative_intervale FROM password_config_changes;"
         mycursor.execute(sql)
         data = mycursor.fetchone()
         return data
