@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import NavBar from '../Components/navbar';
 import { useNavigate } from 'react-router-dom';
+import Cookies from 'universal-cookie';
 
 function PasswordComplexityForm  ()  {
   const [minLength, setMinLength] = useState(8);
@@ -16,7 +17,13 @@ function PasswordComplexityForm  ()  {
   const [tentativeIntervale, setTentativeIntervale] = useState(1);
   const navigate = useNavigate();
 
-  const token = localStorage.getItem('token');
+  const cookies = new Cookies();
+
+  function getCookieValue(cookieName: string): string | undefined {
+    return cookies.get(cookieName);
+  }
+
+  const token = getCookieValue('token');
 
   useEffect(() => {
     

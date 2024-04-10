@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import NavBar from '../Components/navbar';
 import axios from 'axios';
 import { useNavigate  } from 'react-router-dom';
+import Cookies from 'universal-cookie';
 
 
 function ChangeRole({username}:any) {
@@ -11,7 +12,13 @@ function ChangeRole({username}:any) {
 
   document.body.classList.add("overflow-y-hidden")
 
-  const token = localStorage.getItem('token');
+  const cookies = new Cookies();
+
+  function getCookieValue(cookieName: string): string | undefined {
+      return cookies.get(cookieName);
+  }
+
+  const token = getCookieValue('token');
 
   const handleSubmit = async (event: React.FormEvent) => {
       event.preventDefault();
@@ -71,6 +78,7 @@ return (
                   <option value="CLIENT_RESIDENTIEL">Client Residentiel</option>
                   <option value="PREP_AFFAIRE">Préposé Affaire</option>
                   <option value="PREP_RESIDENTIEL">Préposé Residentiel</option>
+                  <option value="ADMIN">Admin</option>
                 </select>
               </div>
               

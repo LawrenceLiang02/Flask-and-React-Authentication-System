@@ -7,14 +7,21 @@ import ChangePassword from './Pages/changePassword';
 import parameters from './Pages/passwordComplexityForm'
 import { PassThrough } from 'stream';
 import PasswordComplexityForm from './Pages/passwordComplexityForm';
+import Cookies from 'universal-cookie';
 
 function PrivateRoute({ element, ...rest }: any) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
+  const cookies = new Cookies();
+
+  function getCookieValue(cookieName: string): string | undefined {
+      return cookies.get(cookieName);
+  }
+
   useEffect(() => {
     async function checkTokenValidity() {
       try {
-        const token = localStorage.getItem('token');
+        const token = getCookieValue('token');
 
         if (!token) {
           setIsAuthenticated(false);

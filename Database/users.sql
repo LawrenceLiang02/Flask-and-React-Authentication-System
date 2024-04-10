@@ -45,6 +45,16 @@ CREATE TABLE password_config_changes (
     PRIMARY KEY (change_id)
 );
 
+use lab5db;
+
+CREATE TABLE old_passwords (
+    passwordId INT NOT NULL AUTO_INCREMENT,
+    user_id int not null,
+    salt varchar(100) NOT NULL,
+    user_password varchar(100) NOT NULL,
+    PRIMARY KEY (passwordId)
+);
+
 INSERT INTO users(username, user_password, salt, user_role, password_creation_date) 
 VALUES 
 ('Admin', 'd07a567a0d46b7309451b5bfaf2e076684f7e7035aea6e21a694e7f2932fb056', 'b5ba71acfd9a42318a2427d0ceac4392', 'ADMIN', 1712464089),
@@ -60,3 +70,4 @@ VALUES
 
 INSERT INTO security_log(event_time, event_type, user_id) VALUES (1711593766, "LOGIN_SUCCESS", 1);
 INSERT INTO password_config_changes(min_length, max_length, require_lowercase, require_uppercase, require_numbers, require_special_chars, password_expiration_time, tentative_intervale, nb_tentative, nb_mdp_ancien) VALUES (8, 16, TRUE, TRUE, TRUE, TRUE, 30, 1, 3, 3);
+INSERT INTO old_passwords(user_id, user_password, salt) VALUES (1, 'd07a567a0d46b7309451b5bfaf2e076684f7e7035aea6e21a694e7f2932fb056', 'b5ba71acfd9a42318a2427d0ceac4392')

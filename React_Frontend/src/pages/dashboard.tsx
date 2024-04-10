@@ -5,18 +5,25 @@ import { Log, User } from '../types';
 import { useNavigate } from 'react-router-dom';
 import ChangePasswordAsAdmin from '../Components/changePasswordAsAdmin';
 import ChangeRole from '../Components/changeRole';
+import Cookies from 'universal-cookie';
 
 function Dashboard() {
-  const username = localStorage.getItem('username');
-  const user_role: string | null = localStorage.getItem('user_role');
+  const cookies = new Cookies();
   const [logs, setLogs] = useState<Log[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [changePwPopUp, setChangePwPopUp] = useState('');
   const [changeRolePopUp, setChangeRolePopUp] = useState('');
   const navigate = useNavigate();
+
+  function getCookieValue(cookieName: string): string | undefined {
+    return cookies.get(cookieName);
+  }
+
+  const username = getCookieValue('username');
+  const user_role = getCookieValue('user_role');
   
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = getCookieValue('token');
     if (token) {
       if (user_role == "ADMIN") {
         axios.get<Log[]>('https://localhost:80/getLogs', {
@@ -40,10 +47,6 @@ function Dashboard() {
         })
         .catch(error => {
           console.error('Error fetching data:', error);
-          // localStorage.removeItem('token');
-          // localStorage.removeItem('username');
-          // localStorage.removeItem('user_role');
-          // navigate("/login");
         });
       }
       else {

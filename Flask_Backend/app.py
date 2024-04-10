@@ -131,7 +131,7 @@ def login():
                 return jsonify({'error': 'Too many failed attempts, please contact an Admin to reset your password'}), 401
 
             if next_login_time is not None and datetime.datetime.utcnow().timestamp() < next_login_time:
-                return jsonify({'error': 'Due to failed attempt, you can not login until ' + datetime.datetime.fromtimestamp(next_login_time).strftime('%Y-%m-%d %H:%M:%S')}), 401
+                return jsonify({'error': 'Due to failed attempt, you can not login for ' + str(round(next_login_time - datetime.datetime.utcnow().timestamp())) + " seconds."}), 401
 
             if hashed_password != user_password:
                 db.createLog(event_type=LogType.FAILURE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
@@ -181,14 +181,15 @@ def updateRole(user, role):
         newRole = request.json["new_role"]
 
         print(newRole)
+        print(Roles.PREP_AFFAIRE.value)
         
-        if (newRole == Roles.ADMIN.value):
+        if (newRole == Roles.ADMIN.value and role != Roles.ADMIN.value):
             return jsonify({'error': "You can't change this to an admin. In fact, nobody can."}), 401
         
-        if (newRole != Roles.PREP_AFFAIRE.value or newRole != Roles.PREP_RESIDENTIEL.value or newRole != Roles.CLIENT_AFFAIRE.value or newRole != Roles.CLIENT_RESIDENTIEL.value):
+        if (newRole != Roles.ADMIN.value and newRole != Roles.PREP_AFFAIRE.value and newRole != Roles.PREP_RESIDENTIEL.value and newRole != Roles.CLIENT_AFFAIRE.value and newRole != Roles.CLIENT_RESIDENTIEL.value):
             return jsonify({'error': "Role Invalide."}), 401
 
-        user_id, user_role, username = db.getUserByUsername(usernameJSON)
+        user_id, user_role, username, oldPassword, salt = db.getUserByUsername(usernameJSON)
 
         if (newRole == user_role):
             return jsonify({'error': "C'est deja ce role"}), 401
@@ -207,13 +208,26 @@ def updatePassword(user, role):
         oldPassword = request.json["oldPassword"]
         newPassword = request.json["newPassword"]
         
-        user_id, getOldPasword, salt = db.validateOldPassword(user)
-        if hash_password(oldPassword, salt) != getOldPasword:
+        user_id, getOldPasword, oldSalt = db.validateOldPassword(user)
+        if hash_password(oldPassword, oldSalt) != getOldPasword:
             return jsonify({'error': 'Wrong password'}), 401
 
         isPwValid = is_valid_password(newPassword)
         if (isPwValid != True):
             return jsonify({'error': isPwValid}), 401
+        
+        old_passwords_list = db.getOldPasswords(user_id)[::-1]
+        nb_reusable_pw, = db.getNumberUnreusablePassword()
+
+        nb_pw_count = 0
+
+        if old_passwords_list != None:
+            for password_entry in old_passwords_list:
+                nb_pw_count += 1
+                if nb_pw_count <= nb_reusable_pw:
+                    temp_salt, temp_passowrd = password_entry
+                    if (temp_passowrd == hash_password(newPassword, temp_salt)):
+                        return jsonify({'error': 'Cant reuse last ' + str(nb_reusable_pw) + ' passwords'}), 401
 
         salt = generate_salt()
         hashed_password = hash_password(newPassword, salt)
@@ -221,6 +235,7 @@ def updatePassword(user, role):
         pw_creation = int((datetime.datetime.utcnow()).timestamp())
 
         db.updatePassword(user, hashed_password, salt, pw_creation)
+        db.createOldPassword(user_id, getOldPasword, oldSalt)
         db.createLog(event_type=LogType.PASSWORD_CHANGE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
     except Exception as ex:
         return jsonify({'error': str(ex)}), 400
@@ -234,11 +249,24 @@ def updatePasswordAsAdmin(user, role):
         usernameJSON = request.json["username"]
         newPassword = request.json["newPassword"]
 
-        user_id, username, user_role = db.getUserByUsername(usernameJSON)
+        user_id, username, user_role, oldPassword, oldSalt = db.getUserByUsername(usernameJSON)
 
         isPwValid = is_valid_password(newPassword)
         if (isPwValid != True):
             return jsonify({'error': isPwValid}), 401
+        
+        old_passwords_list = db.getOldPasswords(user_id)[::-1]
+        nb_reusable_pw, = db.getNumberUnreusablePassword()
+
+        nb_pw_count = 0
+
+        if old_passwords_list != None:
+            for password_entry in old_passwords_list:
+                nb_pw_count += 1
+                if nb_pw_count <= nb_reusable_pw:
+                    temp_salt, temp_passowrd = password_entry
+                    if (temp_passowrd == hash_password(newPassword, temp_salt)):
+                        return jsonify({'error': 'Cant reuse last ' + str(nb_reusable_pw) + ' passwords'}), 401
 
         salt = generate_salt()
         hashed_password = hash_password(newPassword, salt)
@@ -246,6 +274,7 @@ def updatePasswordAsAdmin(user, role):
         pw_creation = int((datetime.datetime.utcnow()).timestamp())
 
         db.updatePassword(usernameJSON, hashed_password, salt, pw_creation)
+        db.createOldPassword(user_id, oldPassword, oldSalt)
         db.createLog(event_type=LogType.PASSWORD_CHANGE.value, event_time=datetime.datetime.utcnow().timestamp(), user_id=user_id)
     except Exception as ex:
         return jsonify({'error': str(ex)}), 400

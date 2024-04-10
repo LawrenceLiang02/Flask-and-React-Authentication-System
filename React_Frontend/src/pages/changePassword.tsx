@@ -2,15 +2,29 @@ import React, { useState } from 'react'
 import NavBar from '../Components/navbar';
 import axios from 'axios';
 import { useNavigate  } from 'react-router-dom';
+import Cookies from 'universal-cookie';
 
 function ChangePassword() {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
     const navigate = useNavigate();
 
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('user_role')
+    const cookies = new Cookies();
+
+    function getCookieValue(cookieName: string): string | undefined {
+        return cookies.get(cookieName);
+    }
+
+    function removeCookie(cookieName: string) {
+        cookies.remove(cookieName, { path: '/' });
+    }
+
+    const token = getCookieValue('token');
+    const role = getCookieValue('user_role')
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -31,9 +45,9 @@ function ChangePassword() {
 
         if (response.status === 200) {
             console.log("Password updated")
-            localStorage.removeItem('token');
-            localStorage.removeItem('username');
-            localStorage.removeItem('user_role');
+            removeCookie('token');
+            removeCookie('username');
+            removeCookie('user_role');
             navigate("/login");
         } else {
             alert('Update failed');
@@ -58,24 +72,53 @@ function ChangePassword() {
             {errorMessage && <div className="text-red-600">{errorMessage}</div>}
             <div className={`flex flex-row items-start justify-between space-x-2 w-full`}>
                 <p className='text-lg font-semibold'>Ancien mot de passe: </p>
-                <input
-                type="password"
-                id="username"
-                className='bg-gray-50 border border-gray-300 rounded-lg py-1 px-2 hover:border-gray-800 ease-in-out duration-200 transition-all'
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                />
+                <div className='flex flex-col'>
+                    <input
+                        type={
+                        showOldPassword ? "text" : "password"
+                        }
+                        id="password"
+                        className='bg-gray-50 border border-gray-300 rounded-lg p-1 hover:border-gray-800 ease-in-out duration-200 transition-all'
+                        value={oldPassword}
+                        onChange={(e) => setOldPassword(e.target.value)}
+                    />
+
+                    <div className='flex flex-row space-x-2 hover:cursor-pointer' onClick={() => setShowOldPassword(!showOldPassword)}>
+                        <input
+                        type="checkbox"
+                        id="showPasswordCheckbox"
+                        className="hover:cursor-pointer"
+                        checked={showOldPassword}
+                        />
+                        <p className='text-md text-slate-700'>Show Password</p>
+                    </div>
+                </div>
             </div>
 
             <div className='flex flex-row items-start justify-between w-full'>
                 <p className='text-lg font-semibold'>Nouveau mot de passe: </p>
-                <input
-                type="password"
-                id="password"
-                className='bg-gray-50 border border-gray-300 rounded-lg py-1 px-2 hover:border-gray-800 ease-in-out duration-200 transition-all'
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                <div className='flex flex-col'>
+                    <input
+                    type={
+                    showNewPassword ? "text" : "password"
+                    }
+                    id="password"
+                    className='bg-gray-50 border border-gray-300 rounded-lg p-1 hover:border-gray-800 ease-in-out duration-200 transition-all'
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
                 />
+
+                <div className='flex flex-row space-x-2 hover:cursor-pointer' onClick={() => setShowNewPassword(!showNewPassword)}>
+                    <input
+                    type="checkbox"
+                    id="showPasswordCheckbox"
+                    className="hover:cursor-pointer"
+                    checked={showNewPassword}
+                    />
+                    <p className='text-md text-slate-700'>Show Password</p>
+                </div>
+                </div>
+            
             </div>
             
             <input className='bg-blue-600 text-white py-2 px-8 rounded-lg hover:bg-blue-700 hover:scale-[105%] hover:drop-shadow-lg ease-in-out duration-200 transition-all cursor-pointer' type="submit" value="Changer le mot de passe" />

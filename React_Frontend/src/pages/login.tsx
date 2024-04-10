@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate  } from 'react-router-dom';
+import Cookies from 'universal-cookie';
 
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const https = require('https');
@@ -21,6 +23,13 @@ function Login() {
     responseType: 'json',
     httpsAgent: agent
 });
+
+const cookies = new Cookies();
+
+function setCookie(key:string, value: string) {
+  cookies.set(key, value, { path: '/' });
+}
+
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -44,9 +53,9 @@ function Login() {
         const token = response.data.token;
         const username = response.data.username;
         const user_role = response.data.user_role;
-        localStorage.setItem('token', token);
-        localStorage.setItem('user_role', user_role);
-        localStorage.setItem('username', username);
+        setCookie('token', token);
+        setCookie('user_role', user_role);
+        setCookie('username', username);
         navigate('/dashboard');
       }
       else {
@@ -58,9 +67,9 @@ function Login() {
       if (error.response.status == 403) {
         const username = error.response.data.username;
         const token = error.response.data.token;
-        localStorage.setItem('user_role', "TEMPORAIRE");
-        localStorage.setItem('username', username);
-        localStorage.setItem('token', token);
+        setCookie('token', token);
+        setCookie('user_role', "TEMPORAIRE");
+        setCookie('username', username);
         navigate('/changePassword');
       }
       else {
@@ -90,13 +99,30 @@ function Login() {
 
           <div className='flex flex-row items-start justify-between w-full'>
             <p className='text-lg font-semibold'>Mot de passe: </p>
-            <input
-              type="password"
-              id="password"
-              className='bg-gray-50 border border-gray-300 rounded-lg p-1 hover:border-gray-800 ease-in-out duration-200 transition-all'
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className='flex flex-col items-start space-y-2 justify-around'>
+              <input
+                type={
+                  showPassword ? "text" : "password"
+                }
+                id="password"
+                className='bg-gray-50 border border-gray-300 rounded-lg p-1 hover:border-gray-800 ease-in-out duration-200 transition-all'
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+
+              <div className='flex flex-row justify-between space-x-2 hover:cursor-pointer' onClick={() => setShowPassword(!showPassword)}>
+                <input
+                  type="checkbox"
+                  id="showPasswordCheckbox"
+                  className="hover:cursor-pointer"
+                  checked={showPassword}
+                />
+                <p className='text-md text-slate-700'>Show Password</p>
+              </div>
+              
+            </div>
+
+              
           </div>
 
           <div className='w-full flex flex-col justfiy-start'>

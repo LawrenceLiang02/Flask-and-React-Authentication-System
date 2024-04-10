@@ -2,15 +2,23 @@ import React, { useState } from 'react'
 import NavBar from '../Components/navbar';
 import axios from 'axios';
 import { useNavigate  } from 'react-router-dom';
+import Cookies from 'universal-cookie';
 
 function ChangePasswordAsAdmin({username}:any) {
     const [newPassword, setNewPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     document.body.classList.add("overflow-y-hidden")
 
-    const token = localStorage.getItem('token');
+    const cookies = new Cookies();
+
+    function getCookieValue(cookieName: string): string | undefined {
+        return cookies.get(cookieName);
+    }
+
+    const token = getCookieValue('token');
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -61,19 +69,35 @@ function ChangePasswordAsAdmin({username}:any) {
                 <form onSubmit={handleSubmit} className='space-y-4 flex flex-col items-center justify-between w-full'>
                 {errorMessage && <div className="text-red-600">{errorMessage}</div>}
                 <div className='flex flex-row items-start justify-between w-full'>
-                    <p className='w-1/2 font-semibold text-lg '>Utilisateur: </p>
+                    <p className='font-semibold text-lg '>Utilisateur: </p>
                     <p className='w-1/2 text-left'>{username}</p>
                 </div>
-                <div className='flex flex-row items-start justify-between w-full'>
-                    <p className='text-lg font-semibold'>Nouveau mot de passe: </p>
-                    <input
-                    type="password"
-                    id="password"
-                    className='bg-gray-50 border border-gray-300 rounded-lg py-1 px-2 hover:border-gray-800 ease-in-out duration-200 transition-all'
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    />
-                </div>
+                <div className='flex flex-row items-start w-full justify-between'>
+                <p className='text-lg font-semibold'>Nouveau mot de passe: </p>
+                    <div className='flex flex-col items-start w-1/2'>
+                        <input
+                            type={
+                            showPassword ? "text" : "password"
+                            }
+                            id="password"
+                            className='bg-gray-50 border border-gray-300 rounded-lg p-1 hover:border-gray-800 ease-in-out duration-200 transition-all'
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                        />
+
+                        <div className='flex flex-row justify-between space-x-2 hover:cursor-pointer' onClick={() => setShowPassword(!showPassword)}>
+                            <input
+                            type="checkbox"
+                            id="showPasswordCheckbox"
+                            className="hover:cursor-pointer"
+                            checked={showPassword}
+                            />
+                            <p className='text-md text-slate-700'>Show Password</p>
+                        </div>
+                    </div>
+              
+            </div>
+
                 
                 <input className='bg-blue-600 text-white py-2 px-8 rounded-lg hover:bg-blue-700 hover:scale-[105%] hover:drop-shadow-lg ease-in-out duration-200 transition-all cursor-pointer' type="submit" value="Changer le mot de passe" />
                 </form>

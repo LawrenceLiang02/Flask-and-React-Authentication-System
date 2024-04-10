@@ -42,7 +42,7 @@ class dbOperations():
     
     def getUserByUsername(self, username):
         mycursor = connection.cursor(buffered=False)
-        sql = ("SELECT user_id, user_role, username FROM users WHERE username = %s;")
+        sql = ("SELECT user_id, user_role, username, user_password, salt FROM users WHERE username = %s;")
         val = (username,)
         mycursor.execute(sql, val)
         data = mycursor.fetchone()
@@ -92,6 +92,21 @@ class dbOperations():
             return data
         else:
             return None
+        
+    def getOldPasswords(self, user_id):
+        mycursor = connection.cursor(buffered=False)
+        sql = "SELECT salt, user_password FROM old_passwords WHERE user_id = %s;"
+        val = (user_id,)
+        mycursor.execute(sql, val)
+        data = mycursor.fetchall()
+        return data
+    
+    def createOldPassword(self, user_id, user_password, salt):
+        mycursor = connection.cursor(buffered=False)
+        sql = "INSERT INTO old_passwords(user_id, user_password, salt) VALUES (%s, %s, %s);"
+        val = (user_id, user_password, salt)
+        mycursor.execute(sql, val)
+        connection.commit()
 
 
     def updateRole(self, username, user_role):
@@ -130,6 +145,14 @@ class dbOperations():
         mycursor.execute(sql)
         data = mycursor.fetchone()
         return data
+    
+    def getNumberUnreusablePassword(self):
+        mycursor = connection.cursor(buffered=False)
+        sql = "SELECT nb_mdp_ancien FROM password_config_changes;"
+        mycursor.execute(sql)
+        data = mycursor.fetchone()
+        return data
+    
     
     def getLoginConfig(self):
         mycursor = connection.cursor(buffered=False)

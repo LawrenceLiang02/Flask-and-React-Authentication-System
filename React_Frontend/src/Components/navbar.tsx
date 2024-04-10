@@ -1,14 +1,26 @@
 import { useNavigate } from "react-router-dom";
+import Cookies from "universal-cookie";
 
 function Navbar() {
-  const username = localStorage.getItem('username');
-  const user_role:String|null = localStorage.getItem('user_role');
+  const cookies = new Cookies();
+
+  function getCookieValue(cookieName: string): string | undefined {
+      return cookies.get(cookieName);
+  }
+
+  function removeCookie(cookieName: string) {
+      cookies.remove(cookieName, { path: '/' });
+  }
+
+  
+  const username = getCookieValue('username');
+  const user_role = getCookieValue('user_role');
   const navigate = useNavigate();
   
   function logOut(){
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('user_role');
+    removeCookie('token');
+    removeCookie('username');
+    removeCookie('user_role');
     navigate("/login");
   }
   return (
