@@ -25,7 +25,7 @@ function Dashboard() {
   useEffect(() => {
     const token = getCookieValue('token');
     if (token) {
-      if (user_role == "ADMIN") {
+      if (user_role == "ADMIN" || user_role == "SUPER_ADMIN") {
         axios.get<Log[]>('https://localhost:80/getLogs', {
           headers: {
             'x-access-tokens': token,

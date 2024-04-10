@@ -6,7 +6,7 @@ CREATE TABLE users(
     user_id int not null AUTO_INCREMENT,
     username varchar(100) NOT NULL UNIQUE,
     user_password varchar(100) NOT NULL,
-    user_role ENUM('ADMIN', 'PREP_RESIDENTIEL', 'PREP_AFFAIRE', 'CLIENT_RESIDENTIEL', 'CLIENT_AFFAIRE') NOT NULL,
+    user_role ENUM('SUPER_ADMIN', 'ADMIN', 'PREP_RESIDENTIEL', 'PREP_AFFAIRE', 'CLIENT_RESIDENTIEL', 'CLIENT_AFFAIRE') NOT NULL,
     salt varchar(100) NOT NULL,
     past_passwords VARCHAR(255),
     session_token VARCHAR(255),
@@ -57,6 +57,7 @@ CREATE TABLE old_passwords (
 
 INSERT INTO users(username, user_password, salt, user_role, password_creation_date) 
 VALUES 
+('SuperAdmin', 'd07a567a0d46b7309451b5bfaf2e076684f7e7035aea6e21a694e7f2932fb056', 'b5ba71acfd9a42318a2427d0ceac4392', 'SUPER_ADMIN', 1712464089),
 ('Admin', 'd07a567a0d46b7309451b5bfaf2e076684f7e7035aea6e21a694e7f2932fb056', 'b5ba71acfd9a42318a2427d0ceac4392', 'ADMIN', 1712464089),
 ('PreRes', 'd07a567a0d46b7309451b5bfaf2e076684f7e7035aea6e21a694e7f2932fb056', 'b5ba71acfd9a42318a2427d0ceac4392', 'PREP_RESIDENTIEL', 1712464089),
 ('PreAff', 'd07a567a0d46b7309451b5bfaf2e076684f7e7035aea6e21a694e7f2932fb056', 'b5ba71acfd9a42318a2427d0ceac4392', 'PREP_AFFAIRE', 1712464089),

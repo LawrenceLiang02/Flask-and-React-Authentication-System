@@ -6,7 +6,9 @@ class dbOperations():
     
     def getUsers(self, param):
         mycursor = connection.cursor(buffered=False)
-        if param == "ADMIN":
+        if param == "SUPER_ADMIN":
+            query = "SELECT user_id, username, user_role  FROM users WHERE user_role LIKE '%RESIDENTIEL%' OR user_role LIKE '%AFFAIRE%' OR user_role = 'ADMIN';"
+        elif param == "ADMIN":
             query = "SELECT user_id, username, user_role  FROM users WHERE user_role LIKE '%RESIDENTIEL%' OR user_role LIKE '%AFFAIRE%';"
         elif param == "RESIDENTIEL" or param == "AFFAIRE":
             query = f"SELECT user_id, username, user_role FROM users WHERE user_role LIKE '%CLIENT_{param}%';"

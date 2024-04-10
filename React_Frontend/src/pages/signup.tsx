@@ -8,6 +8,7 @@ function Signup(){
     const [user_role, setUserRole] = useState('');
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
   
     
 
@@ -90,13 +91,28 @@ function Signup(){
   
             <div className='flex flex-row items-start justify-between w-full'>
               <p className='text-lg font-semibold'>Mot de passe: </p>
-              <input
-                type="password"
-                id="password"
-                className='bg-gray-50 border border-gray-300 rounded-lg p-1 hover:border-gray-800 ease-in-out duration-200 transition-all'
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className='flex flex-col'>
+                <input
+                  type={
+                    showPassword ? "text" : "password"
+                  }
+                  id="password"
+                  className='bg-gray-50 border border-gray-300 rounded-lg p-1 hover:border-gray-800 ease-in-out duration-200 transition-all'
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+
+                <div className='flex flex-row justify-start space-x-2 hover:cursor-pointer w-full' onClick={() => setShowPassword(!showPassword)}>
+                  <input
+                    type="checkbox"
+                    id="showPasswordCheckbox"
+                    className="hover:cursor-pointer"
+                    checked={showPassword}
+                  />
+                  <p className='text-md text-slate-700'>Show Password</p>
+                </div>
+              </div>
+              
             </div>
 
             <div className='flex flex-row items-center justify-between w-full h-full'>

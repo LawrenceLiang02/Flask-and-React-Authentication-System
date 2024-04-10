@@ -61,14 +61,16 @@ def token_required(*required_roles):
     return decorator
 
 @app.route('/users', methods=['GET', 'POST'])
-@token_required(Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value)
+@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value)
 def getAllUsers(user, role):
     try:
         user_role = request.json["user_role"]
         param = ""
 
         if role == user_role:
-            if "ADMIN" in user_role:       
+            if "SUPER_ADMIN" in user_role:       
+                param = "SUPER_ADMIN"
+            elif "ADMIN" in user_role:       
                 param = "ADMIN"
             elif "AFFAIRE" in user_role:
                 param = "AFFAIRE"
@@ -156,25 +158,25 @@ def login():
 
 
 @app.route('/getUser', methods=['GET'])
-@token_required(Roles.ADMIN.value)
+@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value)
 def getUser(user, role):
     return str("test")
 
 
 @app.route('/validatetoken', methods=['POST'])
-@token_required(Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value,)
+@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value,)
 def validateToken(user, role):
     return jsonify({'message': 'token valid'}), 200
 
 
 @app.route('/getLogs', methods=['GET'])
-@token_required(Roles.ADMIN.value,)
+@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value)
 def getLogs(user, role):
     return jsonify(db.getLogs()), 200
 
 
 @app.route('/updateRole', methods=['POST'])
-@token_required(Roles.ADMIN.value,)
+@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value,)
 def updateRole(user, role):
     try:
         usernameJSON = request.json["username"]
@@ -202,7 +204,7 @@ def updateRole(user, role):
 
 
 @app.route('/updatePassword', methods=['POST'])
-@token_required(Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value, Roles.TEMPORARY.value,)
+@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value, Roles.TEMPORARY.value,)
 def updatePassword(user, role):
     try:
         oldPassword = request.json["oldPassword"]
@@ -243,7 +245,7 @@ def updatePassword(user, role):
 
 
 @app.route('/updatePasswordAsAdmin', methods=['POST'])
-@token_required(Roles.ADMIN.value,)
+@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value,)
 def updatePasswordAsAdmin(user, role):
     try:
         usernameJSON = request.json["username"]
@@ -282,7 +284,7 @@ def updatePasswordAsAdmin(user, role):
 
 
 @app.route('/updatePasswordConfig', methods=['POST'])
-@token_required(Roles.ADMIN.value)
+@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value)
 def updatePasswordConfig(user, role):
     try:
         min_length = request.json["min_length"]
@@ -303,7 +305,7 @@ def updatePasswordConfig(user, role):
         return jsonify({'error': str(ex)}), 400
      
 @app.route('/getPasswordConfig', methods=['GET'])
-@token_required(Roles.ADMIN.value)
+@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value)
 def getPasswordConfig(user, role):
     try:
         config = db.getPasswordConfigurationJSON()
