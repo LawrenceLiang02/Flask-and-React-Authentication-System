@@ -60,6 +60,10 @@ def token_required(*required_roles):
         return wrapper
     return decorator
 
+
+## API pour get users
+## Prend les parametres JSON indiqué ci-dessous
+## Retourne les users
 @app.route('/users', methods=['GET', 'POST'])
 @token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value)
 def getAllUsers(user, role):
@@ -87,6 +91,9 @@ def getAllUsers(user, role):
     return jsonify(users),200
 
 
+## API pour signup
+## Prend les parametres JSON indiqué ci-dessous
+## Retourne le statut
 @app.route('/signup', methods=['POST'])
 def signup():
     try:
@@ -115,6 +122,9 @@ def signup():
         return jsonify({'error': str(ex)}), 400
 
 
+## API pour login
+## Prend les parametres dans l'entête, prend un username et password
+## Retourne le token, role, et username en JSON
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     try:
@@ -157,24 +167,33 @@ def login():
         return jsonify({'error': str(e)}), 400
 
 
-@app.route('/getUser', methods=['GET'])
-@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value)
-def getUser(user, role):
-    return str("test")
+## API pour get user
+## Retourne le statut
+# @app.route('/getUser', methods=['GET'])
+# @token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value)
+# def getUser(user, role):
+#     return str("test")
 
 
-@app.route('/validatetoken', methods=['POST'])
-@token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value,)
-def validateToken(user, role):
-    return jsonify({'message': 'token valid'}), 200
+## API pour validate token
+## Retourne le statut
+# @app.route('/validatetoken', methods=['POST'])
+# @token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value,)
+# def validateToken(user, role):
+#     return jsonify({'message': 'token valid'}), 200
 
 
+## API pour getLogs
+## Retourne les logs
 @app.route('/getLogs', methods=['GET'])
 @token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value)
 def getLogs(user, role):
     return jsonify(db.getLogs()), 200
 
 
+## API pour update role
+## Prend les parametres JSON username et new_role
+## Retourne le statut
 @app.route('/updateRole', methods=['POST'])
 @token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value,)
 def updateRole(user, role):
@@ -203,6 +222,9 @@ def updateRole(user, role):
     return jsonify({'message': 'role updated'}), 200
 
 
+## API pour update password
+## Prend les parametres JSON oldPassword et newPassword
+## Retourne le statut
 @app.route('/updatePassword', methods=['POST'])
 @token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value, Roles.PREP_AFFAIRE.value, Roles.PREP_RESIDENTIEL.value, Roles.CLIENT_RESIDENTIEL.value, Roles.CLIENT_AFFAIRE.value, Roles.TEMPORARY.value,)
 def updatePassword(user, role):
@@ -244,6 +266,9 @@ def updatePassword(user, role):
     return jsonify({'message': 'password udpated'}), 200
 
 
+## API pour update password as admin
+## Prend les parametres JSON username et newPassword
+## Retourne le statut
 @app.route('/updatePasswordAsAdmin', methods=['POST'])
 @token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value,)
 def updatePasswordAsAdmin(user, role):
@@ -283,6 +308,9 @@ def updatePasswordAsAdmin(user, role):
     return jsonify({'message': 'password udpated'}), 200
 
 
+## API pour update password config
+## Prend les parametres JSON indiqué ci-dessous
+## Retourne le statut
 @app.route('/updatePasswordConfig', methods=['POST'])
 @token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value)
 def updatePasswordConfig(user, role):
@@ -303,7 +331,10 @@ def updatePasswordConfig(user, role):
         return jsonify({'message': 'Password configuration updated successfully'}), 200
     except Exception as ex:
         return jsonify({'error': str(ex)}), 400
-     
+
+
+## API pour get password config
+## Retourne les password configs
 @app.route('/getPasswordConfig', methods=['GET'])
 @token_required(Roles.SUPER_ADMIN.value, Roles.ADMIN.value)
 def getPasswordConfig(user, role):
@@ -314,6 +345,9 @@ def getPasswordConfig(user, role):
         return jsonify({'error': str(ex)}), 400
 
 
+## Fonction de validation de mot de passe
+## Prend un password
+## Retourne une erreur ou TRUE si cest valide.
 def is_valid_password(password):
     min_length, max_length, require_lowercase, require_uppercase, require_numbers, require_special_chars = db.getPasswordConfiguration()
     
@@ -337,10 +371,12 @@ def is_valid_password(password):
 
     return True
 
-
+## Utilise la librairie uuid pour générer un uuid random
 def generate_salt():
     return uuid.uuid4().hex
 
+## Fonction pour haché le mot de passe avc le hashlib librairie, prend un password, salt, et un nombre d'itération.
+## Retourne le mot de passe haché
 def hash_password(password, salt, iterations=1000):
     hashed_password = hashlib.sha256(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
     for _ in range(iterations - 1):
