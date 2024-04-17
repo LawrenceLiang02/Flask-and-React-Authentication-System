@@ -11,6 +11,8 @@ Pour run le backend et database avec docker, vous devez être dans le top direct
 
 **Dans le cas que lorsque vous buildez, et ça ne run pas le backend**, si vous avez docker desktop, vous pouvez juste recommencer le server qui est le flask app, ou sinon réutiliser la commande.
 
+Il se peut que vous ayez un message en disant que le port 0.0.0.0:3306 n'est pas disponible, faut juste cliquer le boutton restart dans le docker desktop et ça va marcher.
+
 Backend and Database with Docker: ```docker-compose up --build```
 
 ## Git Commands:
