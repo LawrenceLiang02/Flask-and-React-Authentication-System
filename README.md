@@ -1,6 +1,6 @@
 # GTI619-Lab5
 
-Notre projet est configuré avec docker seulement pour le backend et la base de données, puisque dockerize le frontend rendra le processus de load plus lent, react a beaucoup de modules qui ne sont pas nécessaire, mais doivent être là.
+Notre projet est configuré avec **Docker** seulement pour **le backend et la base de données MySQL**, puisque dockerize le frontend rendra le processus de load plus lent, react a beaucoup de modules qui ne sont pas nécessaire, mais doivent être là. **Le frontend est avec React donc faudait Node**.
 
 ## Run Project
 Pour run le frontend, vous devez **etre dans le fichier "React_Frontend"** et ensuite utiliser la commande npm run start. Vous pouvez suivre les commandes ci-dessous.
